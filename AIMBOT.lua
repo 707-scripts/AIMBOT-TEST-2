@@ -8,15 +8,16 @@ local mainSection = main:NewSection("Aimbot Settings")
 
 -- Options de l'aimbot
 local aimbotEnabled = false
-mainSection:NewToggle("Enabled", "Activer/Désactiver l'aimbot", function(state)
+local silenceAimEnabled = false
+
+mainSection:NewToggle("Aimbot Enabled", "Activer/Désactiver l'aimbot", function(state)
     aimbotEnabled = state
     print("Aimbot Enabled: ", aimbotEnabled)
 end)
 
-local toggleMode = false
-mainSection:NewToggle("Toggle Mode", "Activer/Désactiver le mode toggle", function(state)
-    toggleMode = state
-    print("Toggle Mode: ", toggleMode)
+mainSection:NewToggle("Silence Aim Enabled", "Activer/Désactiver le silence aim", function(state)
+    silenceAimEnabled = state
+    print("Silence Aim Enabled: ", silenceAimEnabled)
 end)
 
 local lockPart = "Head"
@@ -59,22 +60,6 @@ checksSection:NewToggle("Alive Check", "Vérifier si vivant", function(state)
     print("Alive Check: ", aliveCheck)
 end)
 
--- Section du mode troisième personne
-local thirdPerson = window:NewTab("Third Person")
-local thirdPersonSection = thirdPerson:NewSection("Third Person")
-
-local thirdPersonEnabled = false
-thirdPersonSection:NewToggle("Enable Third Person", "Activer le mode troisième personne", function(state)
-    thirdPersonEnabled = state
-    print("Third Person Enabled: ", thirdPersonEnabled)
-end)
-
-local thirdPersonSensitivity = 5
-thirdPersonSection:NewSlider("Third Person Sensitivity", "Sensibilité en troisième personne", 500, 1, function(value)
-    thirdPersonSensitivity = value
-    print("Third Person Sensitivity: ", thirdPersonSensitivity)
-end)
-
 -- Section des réglages FOV
 local fov = window:NewTab("FOV")
 local fovSection = fov:NewSection("Field of View")
@@ -115,15 +100,53 @@ fovSection:NewSlider("Sides", "Nombre de côtés", 100, 3, function(value)
     print("Sides: ", sides)
 end)
 
--- Informations
-local info = window:NewTab("Info")
-local infoSection = info:NewSection("Script created by [Your Name].")
+-- Section des options supplémentaires
+local extras = window:NewTab("Extras")
+local extrasSection = extras:NewSection("Extra Options")
 
--- Instructions
-infoSection:NewLabel("Personnalisez les réglages à votre convenance.")
-infoSection:NewLabel("Activez ou désactivez les options pour tester.")
+local killAllEnabled = false
+extrasSection:NewToggle("Kill All", "Tuer tous les joueurs", function(state)
+    killAllEnabled = state
+    print("Kill All Enabled: ", killAllEnabled)
+    if killAllEnabled then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= Players.LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") then
+                player.Character.Humanoid.Health = 0
+            end
+        end
+    end
+end)
 
--- Fonction principale de l'aimbot (simple exemple)
+local speedHackEnabled = false
+extrasSection:NewToggle("Speed Hack", "Activer le speed hack", function(state)
+    speedHackEnabled = state
+    print("Speed Hack Enabled: ", speedHackEnabled)
+    if speedHackEnabled then
+        Players.LocalPlayer.Character.Humanoid.WalkSpeed = 100
+    else
+        Players.LocalPlayer.Character.Humanoid.WalkSpeed = 16
+    end
+end)
+
+local jumpPowerEnabled = false
+extrasSection:NewToggle("Jump Power", "Activer le jump power", function(state)
+    jumpPowerEnabled = state
+    print("Jump Power Enabled: ", jumpPowerEnabled)
+    if jumpPowerEnabled then
+        Players.LocalPlayer.Character.Humanoid.JumpPower = 100
+    else
+        Players.LocalPlayer.Character.Humanoid.JumpPower = 50
+    end
+end)
+
+-- Section Creator
+local creator = window:NewTab("Creator")
+local creatorSection = creator:NewSection("LA TEAM 707")
+
+creatorSection:NewLabel("Script created by LA TEAM 707.")
+creatorSection:NewLabel("Join our Discord: https://discord.gg/GhQDgqx2HP")
+
+-- Fonction principale de l'aimbot et du silence aim
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
@@ -149,12 +172,34 @@ local function getClosestPlayer()
     return closestPlayer
 end
 
+local function isPlayerInFOV(player)
+    local character = player.Character
+    if character and character:FindFirstChild(lockPart) then
+        local targetPart = character:FindFirstChild(lockPart)
+        local screenPoint = Camera:WorldToScreenPoint(targetPart.Position)
+        local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)).Magnitude
+        return distance < fovAmount
+    end
+    return false
+end
+
 RunService.RenderStepped:Connect(function()
     if aimbotEnabled then
         local closestPlayer = getClosestPlayer()
         if closestPlayer and closestPlayer.Character and closestPlayer.Character:FindFirstChild(lockPart) then
             local targetPart = closestPlayer.Character:FindFirstChild(lockPart)
             Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPart.Position)
+        end
+    end
+
+    if silenceAimEnabled then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= Players.LocalPlayer and isPlayerInFOV(player) then
+                if player.Character and player.Character:FindFirstChild(lockPart) then
+                    local targetPart = player.Character:FindFirstChild(lockPart)
+                    Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPart.Position)
+                end
+            end
         end
     end
 end)
