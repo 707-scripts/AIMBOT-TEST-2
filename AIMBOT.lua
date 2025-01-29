@@ -127,28 +127,61 @@ infoSection:NewLabel("Activez ou désactivez les options pour tester.")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
+local Mouse = Players.LocalPlayer:GetMouse()
+
+local function getClosestPlayer()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local humanoidRootPart = player.Character.HumanoidRootPart
+            local screenPoint = Camera:WorldToScreenPoint(humanoidRootPart.Position)
+            local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)).Magnitude
+
+            if distance < shortestDistance then
+                shortestDistance = distance
+                closestPlayer = player
+            end
+        end
+    end
+
+    return closestPlayer
+end
 
 RunService.RenderStepped:Connect(function()
     if aimbotEnabled then
-        local closestPlayer = nil
-        local shortestDistance = math.huge
-
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local humanoidRootPart = player.Character.HumanoidRootPart
-                local screenPoint = Camera:WorldToScreenPoint(humanoidRootPart.Position)
-                local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)).Magnitude
-
-                if distance < shortestDistance then
-                    shortestDistance = distance
-                    closestPlayer = player
-                end
-            end
-        end
-
+        local closestPlayer = getClosestPlayer()
         if closestPlayer and closestPlayer.Character and closestPlayer.Character:FindFirstChild(lockPart) then
             local targetPart = closestPlayer.Character:FindFirstChild(lockPart)
             Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPart.Position)
         end
     end
 end)
+
+-- Fonction pour dessiner le cercle FOV
+local function drawFOV()
+    local circle = Drawing.new("Circle")
+    circle.Visible = fovVisible
+    circle.Color = Color3.new(1, 0, 0)
+    circle.Thickness = thickness
+    circle.NumSides = sides
+    circle.Transparency = transparency
+    circle.Radius = fovAmount
+    circle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+    RunService.RenderStepped:Connect(function()
+        if fovEnabled then
+            circle.Visible = fovVisible
+            circle.Radius = fovAmount
+            circle.Thickness = thickness
+            circle.NumSides = sides
+            circle.Transparency = transparency
+            circle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+        else
+            circle.Visible = false
+        end
+    end)
+end
+
+drawFOV()
