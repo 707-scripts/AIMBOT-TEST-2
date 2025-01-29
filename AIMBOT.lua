@@ -25,11 +25,14 @@ mainSection:NewDropdown("Lock Part", "Choisissez la partie du corps", {"Head", "
     print("Lock Part: ", lockPart)
 end)
 
-mainSection:NewSlider("Sensitivity", "Sensibilité de l'aimbot", 5, 0, function(value)
-    print("Sensitivity: ", value)
+local sensitivity = 5
+mainSection:NewSlider("Sensitivity", "Sensibilité de l'aimbot", 500, 0, function(value)
+    sensitivity = value
+    print("Sensitivity: ", sensitivity)
 end)
 
-mainSection:NewKeybind("Hotkey", "Définir une touche pour activer", Enum.KeyCode.E, function()
+local hotkey = Enum.KeyCode.E
+mainSection:NewKeybind("Hotkey", "Définir une touche pour activer", hotkey, function()
     print("Aimbot Hotkey Pressed")
 end)
 
@@ -65,8 +68,10 @@ thirdPersonSection:NewToggle("Enable Third Person", "Activer le mode troisième 
     print("Third Person Enabled: ", thirdPersonEnabled)
 end)
 
-thirdPersonSection:NewSlider("Third Person Sensitivity", "Sensibilité en troisième personne", 5, 1, function(value)
-    print("Third Person Sensitivity: ", value)
+local thirdPersonSensitivity = 5
+thirdPersonSection:NewSlider("Third Person Sensitivity", "Sensibilité en troisième personne", 500, 1, function(value)
+    thirdPersonSensitivity = value
+    print("Third Person Sensitivity: ", thirdPersonSensitivity)
 end)
 
 -- Section des réglages FOV
@@ -85,21 +90,28 @@ fovSection:NewToggle("Show FOV Circle", "Afficher le cercle FOV", function(state
     print("FOV Circle Visible: ", fovVisible)
 end)
 
+local fovAmount = 360
 fovSection:NewSlider("FOV Amount", "Ajuster la taille du FOV", 360, 10, function(value)
-    print("FOV Amount: ", value)
+    fovAmount = value
+    print("FOV Amount: ", fovAmount)
 end)
 
--- Apparence du cercle FOV
+local transparency = 1
 fovSection:NewSlider("Transparency", "Transparence du cercle", 1, 0, function(value)
-    print("Transparency: ", value)
+    transparency = value
+    print("Transparency: ", transparency)
 end)
 
+local thickness = 5
 fovSection:NewSlider("Thickness", "Épaisseur du cercle", 5, 1, function(value)
-    print("Thickness: ", value)
+    thickness = value
+    print("Thickness: ", thickness)
 end)
 
+local sides = 100
 fovSection:NewSlider("Sides", "Nombre de côtés", 100, 3, function(value)
-    print("Sides: ", value)
+    sides = value
+    print("Sides: ", sides)
 end)
 
 -- Informations
