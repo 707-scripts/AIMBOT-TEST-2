@@ -34,6 +34,7 @@ end)
 local hotkey = Enum.KeyCode.E
 mainSection:NewKeybind("Hotkey", "Définir une touche pour activer", hotkey, function()
     print("Aimbot Hotkey Pressed")
+    aimbotEnabled = not aimbotEnabled
 end)
 
 -- Section des vérifications
@@ -123,9 +124,31 @@ infoSection:NewLabel("Personnalisez les réglages à votre convenance.")
 infoSection:NewLabel("Activez ou désactivez les options pour tester.")
 
 -- Fonction principale de l'aimbot (simple exemple)
-game:GetService("RunService").RenderStepped:Connect(function()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+
+RunService.RenderStepped:Connect(function()
     if aimbotEnabled then
-        print("Aimbot is running...")
-        -- Implémentez ici votre logique pour verrouiller la caméra sur les ennemis
+        local closestPlayer = nil
+        local shortestDistance = math.huge
+
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= Players.LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local humanoidRootPart = player.Character.HumanoidRootPart
+                local screenPoint = Camera:WorldToScreenPoint(humanoidRootPart.Position)
+                local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)).Magnitude
+
+                if distance < shortestDistance then
+                    shortestDistance = distance
+                    closestPlayer = player
+                end
+            end
+        end
+
+        if closestPlayer and closestPlayer.Character and closestPlayer.Character:FindFirstChild(lockPart) then
+            local targetPart = closestPlayer.Character:FindFirstChild(lockPart)
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPart.Position)
+        end
     end
 end)
