@@ -9,6 +9,12 @@ local Camera = workspace.CurrentCamera
 local Mouse = Players.LocalPlayer:GetMouse()
 local LocalPlayer = Players.LocalPlayer
 
+-- Vérification si tout est chargé
+if not Camera or not Players then
+    warn("Les services nécessaires n'ont pas été trouvés !")
+    return
+end
+
 -- Section principale
 local main = window:NewTab("Main")
 local mainSection = main:NewSection("Aimbot Settings")
