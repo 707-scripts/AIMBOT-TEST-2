@@ -2,23 +2,24 @@
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
 local window = library.CreateLib("Custom Aimbot Menu", "DarkTheme") -- Par défaut DarkTheme
 
--- Services Roblox encapsulés
-local plrs = game:GetService("Players")
-local rs = game:GetService("RunService")
-local uis = game:GetService("UserInputService")
-local ws = workspace
-local cam = ws.CurrentCamera
-local lp = plrs.LocalPlayer
-local mouse = lp:GetMouse()
+-- Services Roblox
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
 
--- Variables globales
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
+
+-- Variables
 local guiVisible = true
-local aimbot = false
-local silentAim = false
+local aimbotEnabled = false
+local silentAimEnabled = false
 local lockPart = "Head"
-local sensitivity = 0.1
+local sensitivity = 0.15
 local fovEnabled = false
-local fovRadius = 200
+local fovRadius = 150
 
 -- Cercle FOV
 local fovCircle = Drawing.new("Circle")
@@ -28,38 +29,38 @@ fovCircle.Thickness = 1.5
 fovCircle.NumSides = 100
 fovCircle.Filled = false
 
--- Mise à jour du cercle FOV
-rs.RenderStepped:Connect(function()
+-- MAJ du cercle FOV
+RunService.RenderStepped:Connect(function()
     if fovEnabled then
         fovCircle.Visible = true
-        fovCircle.Position = Vector2.new(mouse.X, mouse.Y + 36)
+        fovCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 36)
         fovCircle.Radius = fovRadius
     else
         fovCircle.Visible = false
     end
 end)
 
--- Onglet principal
+-- **🌟 Onglet Aimbot**
 local mainTab = window:NewTab("Main")
 local mainSection = mainTab:NewSection("Aimbot Settings")
 
-mainSection:NewToggle("Aimbot", "Activer ou désactiver l'aimbot", function(state)
-    aimbot = state
+mainSection:NewToggle("Aimbot", "Activer/Désactiver l'aimbot", function(state)
+    aimbotEnabled = state
 end)
 
-mainSection:NewToggle("Silent Aim", "Activer ou désactiver le Silent Aim", function(state)
-    silentAim = state
+mainSection:NewToggle("Silent Aim", "Activer/Désactiver Silent Aim", function(state)
+    silentAimEnabled = state
 end)
 
-mainSection:NewDropdown("Lock Part", "Choisissez une partie du corps", {"Head", "Torso", "Legs"}, function(part)
-    lockPart = part
+mainSection:NewDropdown("Lock Part", "Sélectionnez la partie du corps", {"Head", "Torso", "Legs"}, function(selected)
+    lockPart = selected
 end)
 
-mainSection:NewSlider("Sensitivity", "Ajuster la sensibilité", 100, 1, function(value)
-    sensitivity = value / 1000
+mainSection:NewSlider("Sensitivity", "Réglez la sensibilité", 100, 5, function(value)
+    sensitivity = value / 500
 end)
 
--- Onglet FOV
+-- **🎯 Onglet FOV**
 local fovTab = window:NewTab("FOV")
 local fovSection = fovTab:NewSection("Field of View")
 
@@ -67,11 +68,11 @@ fovSection:NewToggle("Enable FOV", "Activer le cercle FOV", function(state)
     fovEnabled = state
 end)
 
-fovSection:NewSlider("FOV Radius", "Ajuster le rayon du FOV", 300, 10, function(value)
+fovSection:NewSlider("FOV Radius", "Réglez le rayon du FOV", 300, 10, function(value)
     fovRadius = value
 end)
 
--- Onglet Couleur
+-- **🎨 Onglet Couleur**
 local colorTab = window:NewTab("Color")
 local colorSection = colorTab:NewSection("Changer la couleur du GUI")
 
@@ -79,20 +80,28 @@ colorSection:NewDropdown("Theme", "Choisir un thème", {"DarkTheme", "LightTheme
     library.ChangeTheme(theme)
 end)
 
--- Fonction pour trouver le joueur le plus proche
+-- **📌 Raccourci pour afficher/masquer le GUI**
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.T then
+        guiVisible = not guiVisible
+        library:ToggleUI(guiVisible)
+    end
+end)
+
+-- **🔎 Fonction pour trouver la meilleure cible**
 local function getClosestPlayer()
     local closest = nil
     local shortestDistance = math.huge
 
-    for _, player in ipairs(plrs:GetPlayers()) do
-        if player ~= lp and player.Team ~= lp.Team and player.Character then
-            local char = player.Character
-            local root = char:FindFirstChild("HumanoidRootPart")
-            local part = char:FindFirstChild(lockPart)
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Team ~= LocalPlayer.Team then
+            local character = player.Character
+            local root = character:FindFirstChild("HumanoidRootPart")
+            local part = character:FindFirstChild(lockPart)
 
             if root and part then
-                local screenPos = cam:WorldToViewportPoint(part.Position)
-                local distance = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(mouse.X, mouse.Y)).Magnitude
+                local screenPos = Camera:WorldToViewportPoint(part.Position)
+                local distance = (Vector2.new(screenPos.X, screenPos.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
 
                 if distance < shortestDistance and distance <= fovRadius then
                     closest = player
@@ -104,42 +113,34 @@ local function getClosestPlayer()
     return closest
 end
 
--- Aimbot
-rs.RenderStepped:Connect(function()
-    if aimbot then
+-- **🎯 Aimbot optimisé (lissage amélioré)**
+RunService.RenderStepped:Connect(function()
+    if aimbotEnabled then
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild(lockPart) then
             local part = target.Character:FindFirstChild(lockPart)
             if part then
-                cam.CFrame = cam.CFrame:Lerp(CFrame.new(cam.CFrame.Position, part.Position), sensitivity)
+                Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, part.Position), sensitivity)
             end
         end
     end
 end)
 
--- Silent Aim
-mouse.TargetFilter = ws
-rs.RenderStepped:Connect(function()
-    if silentAim then
+-- **💀 Silent Aim amélioré (tir automatique sur la cible)**
+mouse.TargetFilter = Workspace
+RunService.RenderStepped:Connect(function()
+    if silentAimEnabled then
         local target = getClosestPlayer()
         if target and target.Character and target.Character:FindFirstChild(lockPart) then
             local part = target.Character:FindFirstChild(lockPart)
             if part then
-                mouse.Hit = part.CFrame
+                Mouse.Hit = part.CFrame
             end
         end
     end
 end)
 
--- Fonction pour gérer la visibilité du GUI
-uis.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.T then -- Raccourci pour cacher/afficher l'interface
-        guiVisible = not guiVisible
-        library:ToggleUI(guiVisible)
-    end
-end)
-
--- Onglet créateur
+-- **📌 Onglet créateur**
 local creatorTab = window:NewTab("Creator")
 local creatorSection = creatorTab:NewSection("Script Creator")
 creatorSection:NewLabel("Script créé par LA TEAM 707.")
