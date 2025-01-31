@@ -42,11 +42,7 @@ local visualsSection = visuals:NewSection("ESP Settings")
 -- Aimbot
 mainSection:NewToggle("Enable Aimbot", "Active/désactive l'aimbot", function(state)
     aimbotEnabled = state
-    if state then
-        library:Notify("Aimbot activé")
-    else
-        library:Notify("Aimbot désactivé")
-    end
+    library:Notify(state and "Aimbot activé" or "Aimbot désactivé")
 end)
 
 mainSection:NewKeybind("Aimbot Key", "Touche pour activer/désactiver l'Aimbot", Enum.KeyCode.E, function(key)
@@ -56,11 +52,7 @@ end)
 -- Silent Aim
 mainSection:NewToggle("Enable Silent Aim", "Active/désactive le Silent Aim", function(state)
     silentAimEnabled = state
-    if state then
-        library:Notify("Silent Aim activé")
-    else
-        library:Notify("Silent Aim désactivé")
-    end
+    library:Notify(state and "Silent Aim activé" or "Silent Aim désactivé")
 end)
 
 mainSection:NewKeybind("Silent Aim Key", "Touche pour activer/désactiver le Silent Aim", Enum.KeyCode.R, function(key)
@@ -90,11 +82,7 @@ end)
 -- ESP (Wallhack)
 visualsSection:NewToggle("Enable ESP", "Affiche les joueurs à travers les murs", function(state)
     espEnabled = state
-    if state then
-        library:Notify("ESP activé")
-    else
-        library:Notify("ESP désactivé")
-    end
+    library:Notify(state and "ESP activé" or "ESP désactivé")
 end)
 
 visualsSection:NewColorPicker("ESP Color", "Couleur de l'ESP", espColor, function(color)
@@ -188,21 +176,10 @@ RunService.RenderStepped:Connect(function()
     if espEnabled then
         for _, player in ipairs(Players:GetPlayers()) do
             if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-                local highlight = Instance.new("Highlight", player.Character)
-                highlight.FillColor = espColor
-                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-                highlight.FillTransparency = 0.5
-            end
-        end
-    end
-end)
-
--- Rafraîchissement de l'ESP toutes les secondes
-RunService.Heartbeat:Connect(function()
-    if espEnabled then
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-                local highlight = Instance.new("Highlight", player.Character)
+                local highlight = player.Character:FindFirstChild("Highlight")
+                if not highlight then
+                    highlight = Instance.new("Highlight", player.Character)
+                end
                 highlight.FillColor = espColor
                 highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
                 highlight.FillTransparency = 0.5
@@ -215,19 +192,11 @@ end)
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == aimbotKey then
         aimbotEnabled = not aimbotEnabled
-        if aimbotEnabled then
-            library:Notify("Aimbot activé")
-        else
-            library:Notify("Aimbot désactivé")
-        end
+        library:Notify(aimbotEnabled and "Aimbot activé" or "Aimbot désactivé")
     end
     if input.KeyCode == silentAimKey then
         silentAimEnabled = not silentAimEnabled
-        if silentAimEnabled then
-            library:Notify("Silent Aim activé")
-        else
-            library:Notify("Silent Aim désactivé")
-        end
+        library:Notify(silentAimEnabled and "Silent Aim activé" or "Silent Aim désactivé")
     end
     if input.KeyCode == menuKey then
         menuVisible = not menuVisible
