@@ -21,6 +21,8 @@ local fovCircle = Drawing.new("Circle")
 local aimbotKey = Enum.KeyCode.E
 local menuKey = Enum.KeyCode.T
 local fovSize = 300
+local espColor = Color3.fromRGB(255, 0, 0)
+local targetPlayer = nil
 
 -- Création des onglets
 local main = window:NewTab("Main")
@@ -114,22 +116,28 @@ local function getClosestPlayerInFOV()
     return closestPlayer
 end
 
+-- Fonction pour viser le joueur cible
+local function aimAtTarget(target)
+    if target and target.Character and target.Character:FindFirstChild("Head") then
+        Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position)
+    end
+end
+
 -- Aimbot fonctionnel
 RunService.RenderStepped:Connect(function()
     if aimbotEnabled then
         local target = getClosestPlayerInFOV()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Character.Head.Position), 0.1)
+        if target then
+            aimAtTarget(target)
         end
     end
 
     -- Silent Aim
     if silentAimEnabled then
         local target = getClosestPlayerInFOV()
-        if target and target.Character and target.Character:FindFirstChild("Head") then
-            local headPos = target.Character.Head.Position
-            local direction = (headPos - Camera.CFrame.Position).unit
-            Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, headPos)
+        if target then
+            targetPlayer = target
+            aimAtTarget(target)
         end
     end
 
@@ -138,7 +146,7 @@ RunService.RenderStepped:Connect(function()
         for _, player in ipairs(Players:GetPlayers()) do
             if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
                 local highlight = Instance.new("Highlight", player.Character)
-                highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                highlight.FillColor = espColor
                 highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
                 highlight.FillTransparency = 0.5
             end
@@ -169,5 +177,10 @@ RunService.RenderStepped:Connect(function()
         fovCircle.Radius = fovSize
     end
 end)
+
+-- Affichage des touches dans le menu
+mainSection:NewLabel("Touche pour activer/désactiver l'Aimbot: " .. aimbotKey.Name)
+mainSection:NewLabel("Touche pour activer/désactiver le Silent Aim: " .. aimbotKey.Name)
+extrasSection:NewLabel("Touche pour activer/désactiver le menu: " .. menuKey.Name)
 
 print("Script chargé avec succès !")
