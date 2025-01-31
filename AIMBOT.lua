@@ -22,6 +22,7 @@ local aimbotKey = Enum.KeyCode.E
 local menuKey = Enum.KeyCode.T
 local fovSize = 300
 local espColor = Color3.fromRGB(255, 0, 0)
+local silentAimDistance = 50
 local targetPlayer = nil
 
 -- Création des onglets
@@ -57,6 +58,10 @@ mainSection:NewToggle("Enable Silent Aim", "Active/désactive le Silent Aim", fu
     end
 end)
 
+mainSection:NewSlider("Silent Aim Distance", "Distance d'activation du Silent Aim", 100, 10, function(value)
+    silentAimDistance = value
+end)
+
 -- Kill All
 extrasSection:NewToggle("Kill All", "Tue tous les joueurs", function(state)
     killAllEnabled = state
@@ -77,6 +82,10 @@ visualsSection:NewToggle("Enable ESP", "Affiche les joueurs à travers les murs"
     else
         library:Notify("ESP désactivé")
     end
+end)
+
+visualsSection:NewColorPicker("ESP Color", "Couleur de l'ESP", espColor, function(color)
+    espColor = color
 end)
 
 -- FOV Settings
@@ -123,6 +132,15 @@ local function aimAtTarget(target)
     end
 end
 
+-- Fonction pour vérifier la distance et activer le Silent Aim
+local function checkSilentAimDistance(target)
+    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+        local distance = (LocalPlayer.Character.HumanoidRootPart.Position - target.Character.HumanoidRootPart.Position).Magnitude
+        return distance <= silentAimDistance
+    end
+    return false
+end
+
 -- Aimbot fonctionnel
 RunService.RenderStepped:Connect(function()
     if aimbotEnabled then
@@ -135,7 +153,7 @@ RunService.RenderStepped:Connect(function()
     -- Silent Aim
     if silentAimEnabled then
         local target = getClosestPlayerInFOV()
-        if target then
+        if target and checkSilentAimDistance(target) then
             targetPlayer = target
             aimAtTarget(target)
         end
