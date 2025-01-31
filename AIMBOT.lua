@@ -11,15 +11,16 @@ local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHept
 local window = library.CreateLib("Ultimate Hack Menu", "DarkTheme")
 
 -- Variables globales
-aimbotEnabled = false
-silentAimEnabled = false
-espEnabled = false
-killAllEnabled = false
-fovEnabled = false
-menuVisible = true
+local aimbotEnabled = false
+local silentAimEnabled = false
+local espEnabled = false
+local killAllEnabled = false
+local fovEnabled = false
+local menuVisible = true
 local fovCircle = Drawing.new("Circle")
 local aimbotKey = Enum.KeyCode.E
 local menuKey = Enum.KeyCode.T
+local fovSize = 300
 
 -- Création des onglets
 local main = window:NewTab("Main")
@@ -35,19 +36,26 @@ local visuals = window:NewTab("Visuals")
 local visualsSection = visuals:NewSection("ESP Settings")
 
 -- Aimbot
-aimbotEnabled = false
 mainSection:NewToggle("Enable Aimbot", "Active/désactive l'aimbot", function(state)
     aimbotEnabled = state
+    if state then
+        library:Notify("Aimbot activé")
+    else
+        library:Notify("Aimbot désactivé")
+    end
 end)
 
 -- Silent Aim
-silentAimEnabled = false
 mainSection:NewToggle("Enable Silent Aim", "Active/désactive le Silent Aim", function(state)
     silentAimEnabled = state
+    if state then
+        library:Notify("Silent Aim activé")
+    else
+        library:Notify("Silent Aim désactivé")
+    end
 end)
 
 -- Kill All
-killAllEnabled = false
 extrasSection:NewToggle("Kill All", "Tue tous les joueurs", function(state)
     killAllEnabled = state
     if killAllEnabled then
@@ -60,9 +68,13 @@ extrasSection:NewToggle("Kill All", "Tue tous les joueurs", function(state)
 end)
 
 -- ESP (Wallhack)
-espEnabled = false
 visualsSection:NewToggle("Enable ESP", "Affiche les joueurs à travers les murs", function(state)
     espEnabled = state
+    if state then
+        library:Notify("ESP activé")
+    else
+        library:Notify("ESP désactivé")
+    end
 end)
 
 -- FOV Settings
@@ -72,6 +84,7 @@ fovSection:NewToggle("Enable FOV", "Affiche le cercle de FOV", function(state)
 end)
 
 fovSection:NewSlider("FOV Size", "Taille du FOV", 300, 10, function(value)
+    fovSize = value
     fovCircle.Radius = value
 end)
 
@@ -81,8 +94,8 @@ fovCircle.Filled = false
 fovCircle.Transparency = 1
 fovCircle.Color = Color3.fromRGB(255, 0, 0)
 
--- Fonction pour trouver le joueur le plus proche
-local function getClosestPlayer()
+-- Fonction pour trouver le joueur le plus proche dans le FOV
+local function getClosestPlayerInFOV()
     local closestPlayer = nil
     local shortestDistance = math.huge
 
@@ -91,8 +104,8 @@ local function getClosestPlayer()
             local targetPart = player.Character.HumanoidRootPart
             local screenPoint = Camera:WorldToScreenPoint(targetPart.Position)
             local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
-            
-            if distance < shortestDistance then
+
+            if distance < shortestDistance and distance < fovSize then
                 shortestDistance = distance
                 closestPlayer = player
             end
@@ -104,12 +117,22 @@ end
 -- Aimbot fonctionnel
 RunService.RenderStepped:Connect(function()
     if aimbotEnabled then
-        local target = getClosestPlayer()
+        local target = getClosestPlayerInFOV()
         if target and target.Character and target.Character:FindFirstChild("Head") then
             Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Character.Head.Position), 0.1)
         end
     end
-    
+
+    -- Silent Aim
+    if silentAimEnabled then
+        local target = getClosestPlayerInFOV()
+        if target and target.Character and target.Character:FindFirstChild("Head") then
+            local headPos = target.Character.Head.Position
+            local direction = (headPos - Camera.CFrame.Position).unit
+            Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, headPos)
+        end
+    end
+
     -- ESP
     if espEnabled then
         for _, player in ipairs(Players:GetPlayers()) do
@@ -127,6 +150,11 @@ end)
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == aimbotKey then
         aimbotEnabled = not aimbotEnabled
+        if aimbotEnabled then
+            library:Notify("Aimbot activé")
+        else
+            library:Notify("Aimbot désactivé")
+        end
     end
     if input.KeyCode == menuKey then
         menuVisible = not menuVisible
@@ -138,6 +166,7 @@ end)
 RunService.RenderStepped:Connect(function()
     if fovEnabled then
         fovCircle.Position = Vector2.new(Mouse.X, Mouse.Y)
+        fovCircle.Radius = fovSize
     end
 end)
 
