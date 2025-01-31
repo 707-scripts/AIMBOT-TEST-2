@@ -24,6 +24,7 @@ local fovSize = 300
 local espColor = Color3.fromRGB(255, 0, 0)
 local silentAimDistance = 50
 local targetPlayer = nil
+local silentAimThreshold = 10  -- Distance en pixels pour activer le Silent Aim
 
 -- Création des onglets
 local main = window:NewTab("Main")
@@ -62,13 +63,17 @@ mainSection:NewSlider("Silent Aim Distance", "Distance d'activation du Silent Ai
     silentAimDistance = value
 end)
 
+mainSection:NewSlider("Silent Aim Threshold", "Distance en pixels pour activer le Silent Aim", 50, 1, function(value)
+    silentAimThreshold = value
+end)
+
 -- Kill All
 extrasSection:NewToggle("Kill All", "Tue tous les joueurs", function(state)
     killAllEnabled = state
     if killAllEnabled then
         for _, player in ipairs(Players:GetPlayers()) do
             if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") then
-                player.Character.Humanoid.Health = 0
+                player.Character.Humanoid.Health = 1
             end
         end
     end
@@ -141,6 +146,15 @@ local function checkSilentAimDistance(target)
     return false
 end
 
+-- Fonction pour corriger la visée
+local function correctAim(target)
+    if target and target.Character and target.Character:FindFirstChild("Head") then
+        local headPos = target.Character.Head.Position
+        local direction = (headPos - Camera.CFrame.Position).unit
+        Camera.CFrame = CFrame.lookAt(Camera.CFrame.Position, headPos)
+    end
+end
+
 -- Aimbot fonctionnel
 RunService.RenderStepped:Connect(function()
     if aimbotEnabled then
@@ -154,8 +168,11 @@ RunService.RenderStepped:Connect(function()
     if silentAimEnabled then
         local target = getClosestPlayerInFOV()
         if target and checkSilentAimDistance(target) then
-            targetPlayer = target
-            aimAtTarget(target)
+            local screenPoint = Camera:WorldToScreenPoint(target.Character.Head.Position)
+            local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
+            if distance < silentAimThreshold then
+                correctAim(target)
+            end
         end
     end
 
