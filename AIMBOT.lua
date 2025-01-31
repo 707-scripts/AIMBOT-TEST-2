@@ -19,11 +19,11 @@ local fovEnabled = false
 local menuVisible = true
 local fovCircle = Drawing.new("Circle")
 local aimbotKey = Enum.KeyCode.E
+local silentAimKey = Enum.KeyCode.R
 local menuKey = Enum.KeyCode.T
 local fovSize = 300
 local espColor = Color3.fromRGB(255, 0, 0)
 local silentAimDistance = 50
-local targetPlayer = nil
 local silentAimThreshold = 10  -- Distance en pixels pour activer le Silent Aim
 
 -- Création des onglets
@@ -49,6 +49,10 @@ mainSection:NewToggle("Enable Aimbot", "Active/désactive l'aimbot", function(st
     end
 end)
 
+mainSection:NewKeybind("Aimbot Key", "Touche pour activer/désactiver l'Aimbot", Enum.KeyCode.E, function(key)
+    aimbotKey = key
+end)
+
 -- Silent Aim
 mainSection:NewToggle("Enable Silent Aim", "Active/désactive le Silent Aim", function(state)
     silentAimEnabled = state
@@ -57,6 +61,10 @@ mainSection:NewToggle("Enable Silent Aim", "Active/désactive le Silent Aim", fu
     else
         library:Notify("Silent Aim désactivé")
     end
+end)
+
+mainSection:NewKeybind("Silent Aim Key", "Touche pour activer/désactiver le Silent Aim", Enum.KeyCode.R, function(key)
+    silentAimKey = key
 end)
 
 mainSection:NewSlider("Silent Aim Distance", "Distance d'activation du Silent Aim", 100, 10, function(value)
@@ -73,7 +81,7 @@ extrasSection:NewToggle("Kill All", "Tue tous les joueurs", function(state)
     if killAllEnabled then
         for _, player in ipairs(Players:GetPlayers()) do
             if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") then
-                player.Character.Humanoid.Health = 1
+                player.Character.Humanoid.Health = 0
             end
         end
     end
@@ -146,8 +154,8 @@ local function checkSilentAimDistance(target)
     return false
 end
 
--- Fonction pour corriger la visée
-local function correctAim(target)
+-- Fonction pour corriger la trajectoire de la balle
+local function correctBulletTrajectory(target)
     if target and target.Character and target.Character:FindFirstChild("Head") then
         local headPos = target.Character.Head.Position
         local direction = (headPos - Camera.CFrame.Position).unit
@@ -171,12 +179,26 @@ RunService.RenderStepped:Connect(function()
             local screenPoint = Camera:WorldToScreenPoint(target.Character.Head.Position)
             local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
             if distance < silentAimThreshold then
-                correctAim(target)
+                correctBulletTrajectory(target)
             end
         end
     end
 
     -- ESP
+    if espEnabled then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                local highlight = Instance.new("Highlight", player.Character)
+                highlight.FillColor = espColor
+                highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                highlight.FillTransparency = 0.5
+            end
+        end
+    end
+end)
+
+-- Rafraîchissement de l'ESP toutes les secondes
+RunService.Heartbeat:Connect(function()
     if espEnabled then
         for _, player in ipairs(Players:GetPlayers()) do
             if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
@@ -199,6 +221,14 @@ UserInputService.InputBegan:Connect(function(input)
             library:Notify("Aimbot désactivé")
         end
     end
+    if input.KeyCode == silentAimKey then
+        silentAimEnabled = not silentAimEnabled
+        if silentAimEnabled then
+            library:Notify("Silent Aim activé")
+        else
+            library:Notify("Silent Aim désactivé")
+        end
+    end
     if input.KeyCode == menuKey then
         menuVisible = not menuVisible
         library:ToggleUI(menuVisible)
@@ -215,7 +245,7 @@ end)
 
 -- Affichage des touches dans le menu
 mainSection:NewLabel("Touche pour activer/désactiver l'Aimbot: " .. aimbotKey.Name)
-mainSection:NewLabel("Touche pour activer/désactiver le Silent Aim: " .. aimbotKey.Name)
+mainSection:NewLabel("Touche pour activer/désactiver le Silent Aim: " .. silentAimKey.Name)
 extrasSection:NewLabel("Touche pour activer/désactiver le menu: " .. menuKey.Name)
 
 print("Script chargé avec succès !")
