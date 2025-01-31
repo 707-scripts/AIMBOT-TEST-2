@@ -27,6 +27,9 @@ local silentAimDistance = 50
 local silentAimThreshold = 10  -- Distance en pixels pour activer le Silent Aim
 local aimbotSmoothness = 0.1
 local aimbotPrediction = 0.1
+local tracerEnabled = false
+local tracerColor = Color3.fromRGB(255, 255, 255)
+local tracerThickness = 1
 
 -- Création des onglets
 local main = window:NewTab("Main")
@@ -118,11 +121,29 @@ fovSection:NewSlider("FOV Thickness", "Épaisseur du cercle FOV", 10, 1, functio
     fovCircle.Thickness = value
 end)
 
+-- Tracer Settings
+visualsSection:NewToggle("Enable Tracers", "Affiche les traits menant aux joueurs", function(state)
+    tracerEnabled = state
+end)
+
+visualsSection:NewColorPicker("Tracer Color", "Couleur des traits", tracerColor, function(color)
+    tracerColor = color
+end)
+
+visualsSection:NewSlider("Tracer Thickness", "Épaisseur des traits", 10, 1, function(value)
+    tracerThickness = value
+end)
+
 fovCircle.Thickness = 2
 fovCircle.NumSides = 50
 fovCircle.Filled = false
 fovCircle.Transparency = 1
 fovCircle.Color = Color3.fromRGB(255, 0, 0)
+
+-- Fonction pour vérifier si un joueur est un allié ou un ennemi
+local function isEnemy(player)
+    return player.Team ~= LocalPlayer.Team
+end
 
 -- Fonction pour trouver le joueur le plus proche dans le FOV
 local function getClosestPlayerInFOV()
@@ -130,7 +151,7 @@ local function getClosestPlayerInFOV()
     local shortestDistance = math.huge
 
     for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and isEnemy(player) then
             local targetPart = player.Character.HumanoidRootPart
             local screenPoint = Camera:WorldToScreenPoint(targetPart.Position)
             local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(Mouse.X, Mouse.Y)).Magnitude
@@ -170,6 +191,20 @@ local function correctBulletTrajectory(target)
     end
 end
 
+-- Fonction pour dessiner les traits menant aux joueurs
+local function drawTracers()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local tracer = Drawing.new("Line")
+            tracer.Visible = tracerEnabled
+            tracer.Color = tracerColor
+            tracer.Thickness = tracerThickness
+            tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 1.1)
+            tracer.To = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+        end
+    end
+end
+
 -- Aimbot fonctionnel
 RunService.RenderStepped:Connect(function()
     if aimbotEnabled then
@@ -204,6 +239,11 @@ RunService.RenderStepped:Connect(function()
                 highlight.FillTransparency = 0.5
             end
         end
+    end
+
+    -- Tracers
+    if tracerEnabled then
+        drawTracers()
     end
 end)
 
