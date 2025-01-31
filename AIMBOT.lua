@@ -25,6 +25,8 @@ local fovSize = 300
 local espColor = Color3.fromRGB(255, 0, 0)
 local silentAimDistance = 50
 local silentAimThreshold = 10  -- Distance en pixels pour activer le Silent Aim
+local aimbotSmoothness = 0.1
+local aimbotPrediction = 0.1
 
 -- Création des onglets
 local main = window:NewTab("Main")
@@ -47,6 +49,14 @@ end)
 
 mainSection:NewKeybind("Aimbot Key", "Touche pour activer/désactiver l'Aimbot", Enum.KeyCode.E, function(key)
     aimbotKey = key
+end)
+
+mainSection:NewSlider("Aimbot Smoothness", "Douceur de l'aimbot", 1, 0, function(value)
+    aimbotSmoothness = value
+end)
+
+mainSection:NewSlider("Aimbot Prediction", "Prédiction de l'aimbot", 1, 0, function(value)
+    aimbotPrediction = value
 end)
 
 -- Silent Aim
@@ -100,6 +110,14 @@ fovSection:NewSlider("FOV Size", "Taille du FOV", 300, 10, function(value)
     fovCircle.Radius = value
 end)
 
+fovSection:NewColorPicker("FOV Color", "Couleur du cercle FOV", fovCircle.Color, function(color)
+    fovCircle.Color = color
+end)
+
+fovSection:NewSlider("FOV Thickness", "Épaisseur du cercle FOV", 10, 1, function(value)
+    fovCircle.Thickness = value
+end)
+
 fovCircle.Thickness = 2
 fovCircle.NumSides = 50
 fovCircle.Filled = false
@@ -129,7 +147,8 @@ end
 -- Fonction pour viser le joueur cible
 local function aimAtTarget(target)
     if target and target.Character and target.Character:FindFirstChild("Head") then
-        Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Character.Head.Position)
+        local headPos = target.Character.Head.Position + (target.Character.Head.Velocity * aimbotPrediction)
+        Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, headPos), aimbotSmoothness)
     end
 end
 
