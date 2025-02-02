@@ -30,6 +30,8 @@ local aimbotPrediction = 0.1
 local tracerEnabled = false
 local tracerColor = Color3.fromRGB(255, 255, 255)
 local tracerThickness = 1
+local hitboxExpanderEnabled = false
+local hitboxExpanderSize = 1
 
 -- Création des onglets
 local main = window:NewTab("Main")
@@ -134,6 +136,15 @@ visualsSection:NewSlider("Tracer Thickness", "Épaisseur des traits", 10, 1, fun
     tracerThickness = value
 end)
 
+-- Hitbox Expander
+extrasSection:NewToggle("Enable Hitbox Expander", "Agrandit la hitbox des joueurs", function(state)
+    hitboxExpanderEnabled = state
+end)
+
+extrasSection:NewSlider("Hitbox Expander Size", "Taille de l'expansion de la hitbox", 5, 1, function(value)
+    hitboxExpanderSize = value
+end)
+
 fovCircle.Thickness = 2
 fovCircle.NumSides = 50
 fovCircle.Filled = false
@@ -205,6 +216,14 @@ local function drawTracers()
     end
 end
 
+-- Fonction pour agrandir la hitbox des joueurs
+local function expandHitbox(player)
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local rootPart = player.Character.HumanoidRootPart
+        rootPart.Size = rootPart.Size * hitboxExpanderSize
+    end
+end
+
 -- Aimbot fonctionnel
 RunService.RenderStepped:Connect(function()
     if aimbotEnabled then
@@ -244,6 +263,15 @@ RunService.RenderStepped:Connect(function()
     -- Tracers
     if tracerEnabled then
         drawTracers()
+    end
+
+    -- Hitbox Expander
+    if hitboxExpanderEnabled then
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                expandHitbox(player)
+            end
+        end
     end
 end)
 
