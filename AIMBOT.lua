@@ -221,10 +221,22 @@ local function expandHitbox(player)
     if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         local rootPart = player.Character.HumanoidRootPart
         rootPart.Size = Vector3.new(hitboxExpanderSize, hitboxExpanderSize, hitboxExpanderSize)
-        rootPart.Transparency = 1.0
-        rootPart.BrickColor = BrickColor.new("Really black")
+        rootPart.Transparency = 0.5
+        rootPart.BrickColor = BrickColor.new("Really red")
         rootPart.Material = "Neon"
-        rootPart.CanCollide = false
+        rootPart.CanCollide = true
+    end
+end
+
+-- Fonction pour restaurer la hitbox des joueurs
+local function restoreHitbox(player)
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local rootPart = player.Character.HumanoidRootPart
+        rootPart.Size = Vector3.new(2, 2, 1)
+        rootPart.Transparency = 1
+        rootPart.BrickColor = BrickColor.new("Medium stone grey")
+        rootPart.Material = "Plastic"
+        rootPart.CanCollide = true
     end
 end
 
@@ -276,6 +288,12 @@ RunService.RenderStepped:Connect(function()
                 expandHitbox(player)
             end
         end
+    else
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                restoreHitbox(player)
+            end
+        end
     end
 end)
 
@@ -310,8 +328,8 @@ extrasSection:NewLabel("Touche pour activer/désactiver le menu: " .. menuKey.Na
 
 -- Notifications
 game.StarterGui:SetCore("SendNotification", {
-    Title = "Subscribe To @707SCRIPT";
-    Text = "Made by RXT";
+    Title = "Subscribe To JN HH Gaming";
+    Text = "Made by JN HH Gaming";
     Duration = 1;
 })
 wait(1)
