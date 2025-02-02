@@ -31,7 +31,7 @@ local tracerEnabled = false
 local tracerColor = Color3.fromRGB(255, 255, 255)
 local tracerThickness = 1
 local hitboxExpanderEnabled = false
-local hitboxExpanderSize = 1
+local hitboxExpanderSize = 18.5
 
 -- Création des onglets
 local main = window:NewTab("Main")
@@ -141,7 +141,7 @@ extrasSection:NewToggle("Enable Hitbox Expander", "Agrandit la hitbox des joueur
     hitboxExpanderEnabled = state
 end)
 
-extrasSection:NewSlider("Hitbox Expander Size", "Taille de l'expansion de la hitbox", 5, 1, function(value)
+extrasSection:NewSlider("Hitbox Expander Size", "Taille de l'expansion de la hitbox", 50, 1, function(value)
     hitboxExpanderSize = value
 end)
 
@@ -220,7 +220,11 @@ end
 local function expandHitbox(player)
     if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
         local rootPart = player.Character.HumanoidRootPart
-        rootPart.Size = rootPart.Size * hitboxExpanderSize
+        rootPart.Size = Vector3.new(hitboxExpanderSize, hitboxExpanderSize, hitboxExpanderSize)
+        rootPart.Transparency = 1.0
+        rootPart.BrickColor = BrickColor.new("Really black")
+        rootPart.Material = "Neon"
+        rootPart.CanCollide = false
     end
 end
 
@@ -303,5 +307,18 @@ end)
 mainSection:NewLabel("Touche pour activer/désactiver l'Aimbot: " .. aimbotKey.Name)
 mainSection:NewLabel("Touche pour activer/désactiver le Silent Aim: " .. silentAimKey.Name)
 extrasSection:NewLabel("Touche pour activer/désactiver le menu: " .. menuKey.Name)
+
+-- Notifications
+game.StarterGui:SetCore("SendNotification", {
+    Title = "Subscribe To @707SCRIPT";
+    Text = "Made by RXT";
+    Duration = 1;
+})
+wait(1)
+game.StarterGui:SetCore("SendNotification", {
+    Title = "Have Fun Killing";
+    Text = "Enjoy";
+    Duration = 1;
+})
 
 print("Script chargé avec succès !")
